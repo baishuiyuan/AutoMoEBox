@@ -1,7 +1,5 @@
 AutoMind-MoE 项目完整官方描述
  
-（简洁专业、可直接用于GitHub、支持落地执行、无代码版）
- 
 项目名称
  
 AutoMind-MoE
