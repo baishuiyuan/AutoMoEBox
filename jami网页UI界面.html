@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Jami 液态玻璃·最终完整版</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{background:#e6e6eb;padding:20px 0;display:flex;justify-content:center}
+.phone{width:360px;height:720px;background:#fff;border-radius:30px;overflow:hidden;position:relative;box-shadow:0 10px 40px rgba(0,0,0,0.25)}
+.screen{width:100%;height:100%;position:relative}
+.page{position:absolute;width:100%;height:100%;top:0;left:0;background:var(--bg);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:16px;display:none;overflow-y:auto}
+.page.active{display:block}
+
+.header{display:flex;align-items:center;height:44px;margin-bottom:16px;border-bottom:1px solid rgba(0,0,0,0.1)}
+.back{width:32px;height:32px;border-radius:16px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:#007aff;cursor:pointer}
+.title{flex:1;text-align:center;font-size:18px;font-weight:600}
+.more{width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#007aff;font-size:20px;cursor:pointer}
+
+.card{background:rgba(255,255,255,0.2);border-radius:24px;padding:16px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.3);box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+.btn{background:rgba(0,122,255,0.15);border-radius:24px;padding:12px;text-align:center;font-weight:500;margin-top:12px;cursor:pointer}
+.btn-red{background:rgba(255,59,48,0.15)}
+.btn-gray{background:rgba(0,0,0,0.05)}
+.btn-green{background:rgba(52,199,89,0.15)}
+
+.input{width:100%;background:rgba(255,255,255,0.3);border-radius:20px;padding:12px 16px;border:1px solid rgba(255,255,255,0.4);margin-bottom:12px}
+.list-item{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.05);cursor:pointer}
+.avatar{width:40px;height:40px;border-radius:50%;background:#007aff;margin-right:12px}
+.avatar-group{width:40px;height:40px;border-radius:12px;background:#007aff;margin-right:12px}
+.badge{width:18px;height:18px;border-radius:9px;background:#ff3b30;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;margin-left:auto}
+.label{font-size:12px;color:#888;margin-bottom:4px}
+.tabs{display:flex;gap:12px;margin:12px 0;font-size:14px}
+.tab{cursor:pointer;padding:4px 8px;border-radius:12px}
+.tab.active{background:#007aff;color:#fff}
+.row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.05)}
+.arrow{margin-left:auto;color:#888}
+
+.bubble-area{padding-bottom:100px;padding-top:8px}
+.bubble-left{max-width:70%;background:rgba(255,255,255,0.4);border-radius:18px 18px 18px 4px;padding:10px 14px;margin:8px 0;display:flex;align-items:flex-start;gap:8px}
+.bubble-right{max-width:70%;background:rgba(0,122,255,0.3);border-radius:18px 18px 4px 18px;padding:10px 14px;margin:8px 0 8px auto}
+.bubble-left .avatar,.bubble-right .avatar{width:32px;height:32px;flex-shrink:0}
+
+.chat-input{position:absolute;bottom:64px;left:0;width:100%;padding:8px 12px;display:flex;gap:8px;background:var(--bg);backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,0.2)}
+.chat-input input{flex:1;border-radius:24px;margin:0}
+.chat-input .btn{margin:0;padding:12px 16px}
+
+.bottom-nav{position:absolute;bottom:0;left:0;width:100%;height:64px;background:rgba(255,255,255,0.3);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:space-around;border-top:1px solid rgba(255,255,255,0.2)}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:#8e8e93;cursor:pointer;padding:4px}
+.nav-item.active{color:#007aff}
+
+.switch{width:50px;height:28px;border-radius:14px;background:#ccc;position:relative;cursor:pointer}
+.switch::after{content:'';position:absolute;width:24px;height:24px;border-radius:50%;background:#fff;top:2px;left:2px;transition:0.2s}
+.switch.on{background:#007aff}
+.switch.on::after{left:24px}
+.switch:disabled{opacity:0.5}
+
+.qrcode{width:160px;height:160px;background:#fff;margin:20px auto;border-radius:16px}
+.progress{height:8px;background:rgba(0,0,0,0.05);border-radius:4px;overflow:hidden;margin:8px 0}
+.progress-bar{height:100%;background:#007aff;width:60%}
+
+.dialog{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:280px;background:var(--bg);backdrop-filter:blur(24px);border-radius:24px;padding:20px;display:none;border:1px solid rgba(255,255,255,0.2)}
+.dialog-title{font-size:16px;font-weight:600;margin-bottom:12px;text-align:center}
+.dialog-btns{display:flex;gap:12px;margin-top:16px}
+.dialog-btns .btn{flex:1;margin-top:0}
+.toast{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#fff;padding:8px 16px;border-radius:12px;font-size:14px;display:none;white-space:nowrap}
+
+.blog-detail-img{width:100%;height:180px;background:rgba(0,122,255,0.2);border-radius:16px;margin:12px 0}
+.blog-detail-content{line-height:1.6;font-size:15px;margin:12px 0}
+.blog-action{display:flex;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.1)}
+.blog-action .item{flex:1;text-align:center;padding:8px;border-radius:12px;background:rgba(0,0,0,0.05);cursor:pointer}
+
+.net-info{position:absolute;bottom:70px;left:0;right:0;text-align:center;font-size:12px;color:#666;padding:4px;background:rgba(255,255,255,0.2)}
+
+.desc{font-size:12px;color:#666;margin-top:4px;padding:0 4px}
+
+:root{--bg:#f2f2f7;--text:#000}
+@media(prefers-color-scheme:dark){
+:root{--bg:#1c1c1e;--text:#fff}
+.page{background:#1c1c1e}
+.bottom-nav{background:rgba(30,30,30,0.4)}
+.card{background:rgba(40,40,40,0.3)}
+.bubble-left{background:rgba(60,60,60,0.6)}
+.bubble-right{background:rgba(0,122,255,0.4)}
+}
+</style>
+</head>
+<body>
+
+<div class="phone">
+<div class="screen">
+
+<!-- 欢迎 -->
+<div class="page active" id="welcome">
+  <div style="text-align:center;margin-top:60px">
+    <h2>Jami</h2>
+    <p style="margin:8px 0 40px;color:#888">安全点对点通信</p>
+  </div>
+  <div class="card" onclick="go('register')">创建 Jami 账户</div>
+  <div class="card" onclick="go('link')">从另一台设备连接</div>
+  <div class="card" onclick="go('restore')">从备份文件恢复</div>
+  <div class="card">连接到管理服务器</div>
+  <div class="card">添加 SIP 账户</div>
+  <div style="position:absolute;bottom:40px;left:0;right:0;text-align:center;font-size:12px;color:#888">
+    版本 1.0.0 &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span style="color:#007aff;cursor:pointer" onclick="go('about')">开源协议</span>
+  </div>
+</div>
+
+<!-- 注册 -->
+<div class="page" id="register">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">创建账号</div></div>
+  <div class="card">
+    <div class="label">用户名</div><input class="input" placeholder="用户名">
+    <div class="label">本地密码</div><input class="input" type="password" placeholder="密码">
+    <input class="input" type="password" placeholder="确认密码">
+    <div>Jami ID：7A29-3DF0-4581</div>
+    <div class="btn btn-gray">导出备份</div>
+  </div>
+  <div class="btn" onclick="go('main_msg')">完成</div>
+  <div class="btn btn-gray" onclick="go('main_msg')">跳过</div>
+</div>
+
+<!-- 恢复 -->
+<div class="page" id="restore">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">账号恢复</div></div>
+  <div class="card">
+    <input class="input" placeholder="备份密钥">
+    <div class="btn btn-gray">选择文件</div>
+    <input class="input" type="password" placeholder="密码">
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  <div class="btn">恢复</div>
+</div>
+
+<!-- 设备关联 -->
+<div class="page" id="link">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">设备关联</div></div>
+  <div class="card" style="text-align:center"><div class="qrcode"></div><p>扫描绑定设备</p></div>
+  <div class="btn">扫描二维码</div>
+  <div class="card"><div class="row"><span>华为手机</span><div class="btn-gray">移除</div></div></div>
+</div>
+
+<!-- 关于 -->
+<div class="page" id="about">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">关于</div></div>
+  <div class="card">版本：1.0.0<br>协议：GPLv3<br>官网：jami.net</div>
+  <div class="btn" onclick="showToast('已是最新')">检查更新</div>
+</div>
+
+<!-- 消息主页 -->
+<div class="page" id="main_msg">
+  <div class="header"><div style="width:32px"></div><div class="title">消息</div><div class="more" onclick="go('chatSetting')">⋮</div></div>
+  <input class="input" placeholder="搜索">
+  <div class="tabs">
+    <div class="tab active" onclick="switchMsgTab('private')">个人</div>
+    <div class="tab" onclick="switchMsgTab('group')">群聊</div>
+  </div>
+
+  <div id="msg-private">
+    <div class="list-item" onclick="go('chat')">
+      <div class="avatar"></div>
+      <div><div>张三</div><div style="font-size:12px;color:#888">晚上好</div></div>
+      <div class="badge">2</div>
+    </div>
+  </div>
+
+  <div id="msg-group" style="display:none">
+    <div class="list-item" onclick="go('group_chat')">
+      <div class="avatar-group"></div>
+      <div><div>技术交流群</div><div style="font-size:12px;color:#888">收到</div></div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active" data-tab="msg">消息</div>
+    <div class="nav-item" data-tab="contact">联系人</div>
+    <div class="nav-item" data-tab="blog">博客</div>
+    <div class="nav-item" data-tab="me">我的</div>
+  </div>
+</div>
+
+<!-- 个人聊天 -->
+<div class="page" id="chat">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">张三</div><div class="more" onclick="go('contactInfo')">⋮</div></div>
+  <div class="bubble-area">
+    <div class="bubble-left"><div class="avatar"></div><div>你好</div></div>
+    <div class="bubble-right">你好呀</div>
+    <div class="bubble-left"><div class="avatar"></div><div>今晚有空吗？</div></div>
+  </div>
+  <div class="chat-input">
+    <input class="input" placeholder="输入消息">
+    <div class="btn" onclick="showToast('发送成功')">发送</div>
+  </div>
+</div>
+
+<!-- 群聊界面 -->
+<div class="page" id="group_chat">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">技术交流群</div><div class="more" onclick="go('group_setting')">⋮</div></div>
+  <div class="bubble-area">
+    <div class="bubble-left"><div class="avatar"></div><div>大家好</div></div>
+    <div class="bubble-left"><div class="avatar"></div><div>项目进度如何</div></div>
+    <div class="bubble-right">收到</div>
+  </div>
+  <div class="chat-input">
+    <input class="input" placeholder="群内发言">
+    <div class="btn" onclick="showToast('发送成功')">发送</div>
+  </div>
+</div>
+
+<!-- 群设置 -->
+<div class="page" id="group_setting">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">群资料</div></div>
+  <div class="card"><div class="row">群名称</div><div class="row">群公告</div><div class="row">群成员 12人</div></div>
+  <div class="card">
+    <div class="row"><span>允许发言</span><div class="switch on"></div></div>
+    <div class="row"><span>允许改资料</span><div class="switch"></div></div>
+  </div>
+  <div class="btn btn-red" onclick="showToast('已退出群')">退出群聊</div>
+</div>
+
+<!-- 聊天设置 -->
+<div class="page" id="chatSetting">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">聊天设置</div></div>
+  <div class="card">
+    <div class="row"><span>已读回执</span><div class="switch on"></div></div>
+    <div class="row"><span>输入状态</span><div class="switch on"></div></div>
+  </div>
+</div>
+
+<!-- 联系人 -->
+<div class="page" id="main_contact">
+  <div class="header"><div class="more" onclick="go('addContact')">+</div><div class="title">联系人</div><div style="width:32px"></div></div>
+  <input class="input" placeholder="搜索">
+  <div class="tabs">
+    <div class="tab active" onclick="switchContactTab('private')">个人</div>
+    <div class="tab" onclick="switchContactTab('group')">群聊</div>
+  </div>
+
+  <div id="contact-private">
+    <div class="list-item" onclick="go('chat')">
+      <div class="avatar"></div><div>张三</div>
+    </div>
+  </div>
+
+  <div id="contact-group" style="display:none">
+    <div class="list-item" onclick="go('group_chat')">
+      <div class="avatar-group"></div><div>技术交流群</div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" data-tab="msg">消息</div>
+    <div class="nav-item active" data-tab="contact">联系人</div>
+    <div class="nav-item" data-tab="blog">博客</div>
+    <div class="nav-item" data-tab="me">我的</div>
+  </div>
+</div>
+
+<!-- 添加联系人 -->
+<div class="page" id="addContact">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">添加</div></div>
+  <div class="card"><input class="input" placeholder="Jami ID"><div class="btn">搜索</div></div>
+  <div class="btn btn-gray" onclick="showToast('打开相机')">扫码添加</div>
+</div>
+
+<!-- 联系人资料 -->
+<div class="page" id="contactInfo">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">资料</div></div>
+  <div class="card" style="text-align:center">
+    <div class="avatar" style="width:60px;height:60px;margin:0 auto"></div>
+    <div>张三</div><div style="font-size:12px">ID: 7A29-3DF0</div>
+  </div>
+  <div class="btn" onclick="go('chat')">发消息</div>
+  <div class="btn">语音</div><div class="btn">视频</div>
+  <div class="row"><span>屏蔽</span><div class="switch"></div></div>
+  <div class="btn btn-red">删除</div>
+</div>
+
+<!-- 博客主页 -->
+<div class="page" id="main_blog">
+  <div class="header"><div style="width:32px"></div><div class="title">博客</div><div class="more" onclick="go('publish')">+</div></div>
+  <input class="input" placeholder="搜索">
+  <div class="tabs">
+    <div class="tab active" onclick="bTab('all')">全部</div>
+    <div class="tab" onclick="bTab('sub')">订阅</div>
+    <div class="tab" onclick="bTab('rec')">推荐</div>
+    <div class="tab" onclick="bTab('my')">我的</div>
+  </div>
+
+  <div id="b-all">
+    <div class="card" onclick="go('blog_detail')">
+      <div style="display:flex;align-items:center">
+        <div class="avatar"></div>
+        <div style="margin-left:12px"><div>技术博主</div><div style="font-size:12px">今天</div></div>
+      </div>
+      <div style="margin:12px 0">Liquid Glass 设计规范</div>
+      <div style="display:flex;gap:16px">
+        <span>👍32</span><span>👎🏻5</span><span>💬10</span><span style="margin-left:auto">订阅</span>
+      </div>
+    </div>
+  </div>
+  <div id="b-sub" style="display:none"><div class="card">你已订阅的博主</div></div>
+  <div id="b-rec" style="display:none"><div class="card">为你推荐</div></div>
+  <div id="b-my" style="display:none"><div class="card">我的帖子</div></div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" data-tab="msg">消息</div>
+    <div class="nav-item" data-tab="contact">联系人</div>
+    <div class="nav-item active" data-tab="blog">博客</div>
+    <div class="nav-item" data-tab="me">我的</div>
+  </div>
+</div>
+
+<!-- 发布博客 -->
+<div class="page" id="publish">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">写帖子</div></div>
+  <div class="card">
+    <input class="input" placeholder="标题">
+    <textarea class="input" style="height:140px"></textarea>
+    <div class="btn btn-gray">添加图片</div>
+  </div>
+  <div class="btn" onclick="showToast('发布成功')">发布</div>
+  <div class="btn btn-gray" onclick="showToast('已存草稿')">草稿</div>
+</div>
+
+<!-- 博客详情 -->
+<div class="page" id="blog_detail">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">详情</div></div>
+  <div class="card">
+    <div style="display:flex;align-items:center">
+      <div class="avatar"></div><div style="margin-left:12px"><div>技术博主</div><div>今天</div></div>
+    </div>
+    <h2 style="margin:12px 0">Liquid Glass 设计规范</h2>
+    <div class="blog-detail-img"></div>
+    <div class="blog-detail-content">
+      磨砂模糊、高圆角、高光描边、深浅双主题、统一间距。现代移动端高级质感。
+    </div>
+    <div class="blog-action">
+      <div class="item" onclick="showToast('点赞成功')">👍 32</div>
+      <div class="item" onclick="showToast('已踩')">👎🏻 5</div>
+      <div class="item" onclick="go('blog_comment')">💬 10</div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px">
+    <div style="font-weight:bold;margin-bottom:8px">评论</div>
+    <div class="list-item"><div class="avatar"></div><div><div>用户</div><div>写得很好</div></div></div>
+  </div>
+
+  <div class="chat-input" style="position:static;margin-top:12px">
+    <input class="input" placeholder="发表评论">
+    <div class="btn" onclick="showToast('评论成功')">发送</div>
+  </div>
+</div>
+
+<!-- 博客评论 -->
+<div class="page" id="blog_comment">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">全部评论</div></div>
+  <div class="list-item"><div class="avatar"></div><div><div>用户</div><div>不错</div></div></div>
+  <div class="chat-input" style="position:static">
+    <input class="input" placeholder="评论">
+    <div class="btn">发送</div>
+  </div>
+</div>
+
+<!-- 我的 -->
+<div class="page" id="main_me">
+  <div class="header"><div style="width:32px"></div><div class="title">我的</div><div style="width:32px"></div></div>
+
+  <div class="card" onclick="go('my_profile')" style="cursor:pointer">
+    <div style="display:flex;align-items:center">
+      <div class="avatar"></div>
+      <div style="margin-left:12px"><div>我的用户名</div><div style="font-size:12px">ID: 7A29-3DF0</div></div>
+      <div class="arrow">></div>
+    </div>
+  </div>
+
+  <div class="card" onclick="go('my_blog')">我的博客</div>
+  <div class="card" onclick="go('subManage')">订阅管理</div>
+  <div class="card" onclick="go('network')">网络连接设置</div>
+  <div class="card" onclick="go('safe')">账号安全</div>
+  <div class="card" onclick="go('privacy')">隐私</div>
+  <div class="card" onclick="go('theme')">外观</div>
+
+  <div class="btn btn-red" onclick="showDialog()">退出登录</div>
+
+  <div class="net-info">网络：正常 | P2P连接：4个 | DHT节点：12</div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" data-tab="msg">消息</div>
+    <div class="nav-item" data-tab="contact">联系人</div>
+    <div class="nav-item" data-tab="blog">博客</div>
+    <div class="nav-item active" data-tab="me">我的</div>
+  </div>
+</div>
+
+<!-- 我的资料 -->
+<div class="page" id="my_profile">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">我的资料</div></div>
+  <div class="card" style="text-align:center">
+    <div class="avatar" style="width:70px;height:70px;margin:0 auto"></div>
+    <div style="font-size:20px;margin-top:8px">我的用户名</div>
+    <div style="font-size:12px;color:#888">ID: 7A29-3DF0</div>
+  </div>
+  <div class="card">
+    <div class="row">好友数量 <span>10</span></div>
+    <div class="row">群聊数量 <span>3</span></div>
+    <div class="row">帖子数量 <span>5</span></div>
+    <div class="row">获赞 <span>128</span></div>
+    <div class="row">获踩 <span>7</span></div>
+    <div class="row">评论总数 <span>46</span></div>
+  </div>
+</div>
+
+<!-- 我的博客 -->
+<div class="page" id="my_blog">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">我的博客</div></div>
+  <div class="btn" onclick="go('publish')">+ 新建帖子</div>
+  <div class="card" onclick="go('blog_detail')">我的设计规范</div>
+  <div class="card" onclick="go('draft')">草稿箱</div>
+  <div class="card">
+    <div class="row">获赞 <span>128</span></div>
+    <div class="row">获踩 <span>7</span></div>
+    <div class="row">评论 <span>46</span></div>
+    <div class="row">订阅 <span>16</span></div>
+  </div>
+</div>
+
+<!-- 草稿箱 -->
+<div class="page" id="draft">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">草稿</div></div>
+  <div class="card">未完成草稿1</div>
+</div>
+
+<!-- 订阅管理 -->
+<div class="page" id="subManage">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">订阅</div></div>
+  <div class="tabs">
+    <div class="tab active" onclick="st1()">我订阅的</div>
+    <div class="tab" onclick="st2()">订阅我的</div>
+  </div>
+  <div id="sub1"><div class="list-item"><div class="avatar"></div><div>技术博主</div></div></div>
+  <div id="sub2" style="display:none"><div class="card">暂无数据</div></div>
+</div>
+
+<!-- 网络设置 -->
+<div class="page" id="network">
+  <div class="header"><div class="back" onclick="back()">←</div><div class="title">网络连接</div></div>
+
+  <div class="card"><div class="row">名称服务器<span>默认</span></div></div>
+
+  <div style="font-weight:bold;margin-top:16px">OpenDHT</div>
+  <div class="card">
+    <div class="row">初始服务器<span>已配置</span></div>
+    <div class="desc">bootstrap.jami.net;4222;DoH节点</div>
+    <div class="row">使用DHT代理<div class="switch on"></div></div>
+    <div class="desc">已开启，提升穿透</div>
+    <div class="row">DHT代理地址<span>dhtproxy1.jami.net:82</span></div>
+    <div class="row">代理列表<div class="switch on"></div></div>
+    <div class="row">本地发现<div class="switch on"></div></div>
+  </div>
+
+  <div style="font-weight:bold;margin-top:16px">P2P连接</div>
+  <div class="card">
+    <div class="row">UPnP<div class="switch on"></div></div>
+    <div class="desc">自动端口映射</div>
+    <div class="row">TURN<div class="switch"></div></div>
+    <div class="desc">已关闭，仅直连</div>
+  </div>
+
+  <div style="font-weight:bold;margin-top:16px">音频端口</div>
+  <div class="card">
+    <div class="row">最小端口<span>16384</span></div>
+    <div class="row">最大端口<span>32766</span></div>
+  </div>
+</div>
+
+<!-- 简易页面 -->
+<div class="page" id="safe"><div class="header"><div class="back" onclick="back()">←</div><div class="title">安全</div></div><div class="card">设备管理</div></div>
+<div class="page" id="privacy"><div class="header"><div class="back" onclick="back()">←</div><div class="title">隐私</div></div><div class="card">黑名单</div></div>
+<div class="page" id="theme"><div class="header"><div class="back" onclick="back()">←</div><div class="title">外观</div></div><div class="row">深色<div class="switch"></div></div></div>
+
+<!-- 弹窗 -->
+<div class="dialog" id="dialog">
+  <div class="dialog-title">退出登录？</div>
+  <div class="dialog-btns">
+    <div class="btn btn-gray" onclick="closeDialog()">取消</div>
+    <div class="btn" onclick="go('welcome')">确定</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+</div>
+</div>
+
+<script>
+let stack = ["welcome"];
+let pages = document.querySelectorAll(".page");
+
+function go(id) {
+  pages.forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  stack.push(id);
+}
+function back() {
+  if(stack.length<=1)return;
+  stack.pop();
+  pages.forEach(p=>p.classList.remove("active"));
+  document.getElementById(stack[stack.length-1]).classList.add("active");
+}
+
+document.querySelectorAll(".nav-item").forEach(item=>{
+  item.onclick=()=>{
+    document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+    item.classList.add("active");
+    go("main_"+item.dataset.tab);
+  }
+});
+
+function switchMsgTab(t){
+  document.querySelectorAll("#msg-private,#msg-group").forEach(e=>e.style.display="none");
+  document.querySelectorAll(".tab").forEach(e=>e.classList.remove("active"));
+  document.getElementById("msg-"+t).style.display="block";
+  event.target.classList.add("active");
+}
+function switchContactTab(t){
+  document.querySelectorAll("#contact-private,#contact-group").forEach(e=>e.style.display="none");
+  document.querySelectorAll(".tab").forEach(e=>e.classList.remove("active"));
+  document.getElementById("contact-"+t).style.display="block";
+  event.target.classList.add("active");
+}
+function bTab(t){
+  document.querySelectorAll("#b-all,#b-sub,#b-rec,#b-my").forEach(e=>e.style.display="none");
+  document.querySelectorAll(".tab").forEach(e=>e.classList.remove("active"));
+  document.getElementById("b-"+t).style.display="block";
+  event.target.classList.add("active");
+}
+function st1(){document.getElementById("sub1").style.display="block";document.getElementById("sub2").style.display="none";event.target.classList.add("active");document.querySelectorAll(".tab")[0].classList.remove("active")}
+function st2(){document.getElementById("sub1").style.display="none";document.getElementById("sub2").style.display="block";event.target.classList.add("active");document.querySelectorAll(".tab")[1].classList.remove("active")}
+
+function showDialog(){document.getElementById("dialog").style.display="block"}
+function closeDialog(){document.getElementById("dialog").style.display="none"}
+function showToast(t){
+  let o=document.getElementById("toast");
+  o.innerText=t;o.style.display="block";
+  setTimeout(()=>o.style.display="none",1400);
+}
+
+document.querySelectorAll(".switch").forEach(s=>{
+  s.onclick=()=>{
+    if(s.classList.contains("disabled"))return;
+    s.classList.toggle("on");
+    showToast("已"+(s.classList.contains("on")?"开启":"关闭"));
+  }
+});
+</script>
+</body>
+</html>
